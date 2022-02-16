@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -32,7 +33,9 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 authorizeRequests()
                 .antMatchers("/","/index.html")
                 .permitAll()
-                .antMatchers(HttpMethod.GET,"/students/**").hasAuthority(ApplicationPermission.STUDENT_READ.name())
+               .antMatchers(HttpMethod.GET,"/students/**").hasAuthority(ApplicationPermission.STUDENT_READ.name())
+               .antMatchers(HttpMethod.GET, "/management/**").hasAnyAuthority(ApplicationPermission.COURSE_WRITE.name(), ApplicationPermission.COURSE_READ.name())
+               .antMatchers(HttpMethod.POST, "/management/**").hasAuthority(ApplicationPermission.COURSE_WRITE.name())
                 .anyRequest()
                 .authenticated()
                 .and().httpBasic();
@@ -44,7 +47,8 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
         return new InMemoryUserDetailsManager(Arrays.asList(
                 User.builder().username("harish").password(encoder.encode("password")).roles(STUDENT.name()).authorities(STUDENT.getAuthorities()).build(),
                 User.builder().username("manish").password(encoder.encode("password")).roles(STUDENT.name()).authorities(STUDENT.getAuthorities()).build(),
-                User.builder().username("kartik").password(encoder.encode("password")).roles(ADMIN.name(),STUDENT.name()).authorities(ADMIN.getAuthorities()).build()
+                User.builder().username("kartik").password(encoder.encode("password")).roles(ADMIN.name(),STUDENT.name()).authorities(ADMIN.getAuthorities()).build(),
+                User.builder().username("vishal").password(encoder.encode("password")).roles(NEW_ADMIN.name()).authorities(NEW_ADMIN.getAuthorities()).build()
         ));
     }
 }
