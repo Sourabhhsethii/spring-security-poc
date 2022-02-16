@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,6 +27,9 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     PasswordEncoder encoder;
 
+    @Autowired
+    ApplicationUserDetailsService applicationUserDetailsService;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
@@ -38,10 +42,10 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                .antMatchers(HttpMethod.POST, "/management/**").hasAuthority(ApplicationPermission.COURSE_WRITE.name())
                 .anyRequest()
                 .authenticated()
-                .and().httpBasic();
+                .and().formLogin();
     }
 
-    @Override
+    /*@Override
     @Bean
     protected UserDetailsService userDetailsService() {
         return new InMemoryUserDetailsManager(Arrays.asList(
@@ -50,5 +54,21 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 User.builder().username("kartik").password(encoder.encode("password")).roles(ADMIN.name(),STUDENT.name()).authorities(ADMIN.getAuthorities()).build(),
                 User.builder().username("vishal").password(encoder.encode("password")).roles(NEW_ADMIN.name()).authorities(NEW_ADMIN.getAuthorities()).build()
         ));
+    }*/
+
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider(){
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(encoder);
+        provider.setUserDetailsService(applicationUserDetailsService);
+
+        return provider;
     }
+
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
+    }
+
+
 }
