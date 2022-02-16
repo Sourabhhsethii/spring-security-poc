@@ -1,5 +1,7 @@
 package com.example.securitydemo.security;
 
+import com.example.securitydemo.JWTAuthenticationFilter;
+import com.example.securitydemo.JWTTokenVerfier;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,13 +36,17 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        http.
-                authorizeRequests()
+        http.csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .addFilter(new JWTAuthenticationFilter(authenticationManager()))
+                .addFilterAfter(new JWTTokenVerfier(),JWTAuthenticationFilter.class)
+                .authorizeRequests()
                 .antMatchers("/","/index.html")
                 .permitAll()
-               .antMatchers(HttpMethod.GET,"/students/**").hasAuthority(ApplicationPermission.STUDENT_READ.name())
-               .antMatchers(HttpMethod.GET, "/management/**").hasAnyAuthority(ApplicationPermission.COURSE_WRITE.name(), ApplicationPermission.COURSE_READ.name())
-               .antMatchers(HttpMethod.POST, "/management/**").hasAuthority(ApplicationPermission.COURSE_WRITE.name())
+                .antMatchers(HttpMethod.GET,"/students/**").hasAuthority(ApplicationPermission.STUDENT_READ.name())
+                .antMatchers(HttpMethod.GET, "/management/**").hasAnyAuthority(ApplicationPermission.COURSE_WRITE.name(), ApplicationPermission.COURSE_READ.name())
+                .antMatchers(HttpMethod.POST, "/management/**").hasAuthority(ApplicationPermission.COURSE_WRITE.name())
                 .anyRequest()
                 .authenticated()
                 .and().formLogin();
